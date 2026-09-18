@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Planner</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { min-height: 100vh; }
+  #app { max-width: 1040px; margin: 0 auto; padding: var(--space-4) var(--space-6) var(--space-8); }
+  .topbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0 var(--space-6); }
+  .brand { font-family: var(--font-heading); font-weight: 600; font-size: 20px; margin-right: auto; cursor: pointer; }
+  .brand span { font-weight: 400; }
+  .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+  .toolbar .input { max-width: 320px; }
+  .plist { display: flex; flex-direction: column; }
+  .prow { display: grid; grid-template-columns: minmax(0,1fr) 140px 120px; gap: var(--space-4); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); cursor: pointer; text-align: left; background: none; border-top: 0; border-left: 0; border-right: 0; font: inherit; color: inherit; width: 100%; }
+  .prow:hover .pname { color: var(--color-accent-700); }
+  .pname { font-family: var(--font-heading); font-weight: 600; font-size: 19px; }
+  .pobj { font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin-top: 3px; }
+  .pdue { font-size: 13px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+  .empty { padding: var(--space-8) 0; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-style: italic; }
+  .lock { max-width: 380px; margin: 14vh auto 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .lock h1 { margin-bottom: var(--space-2); }
+  .lock h1 span { font-weight: 400; }
+  .err { color: var(--color-accent-2-700); font-size: 13px; min-height: 18px; }
+  .hint { font-size: 13px; color: color-mix(in srgb, var(--color-text) 65%, transparent); }
+  /* sheet */
+  .sheet { display: flex; flex-direction: column; gap: var(--space-8); }
+  .titlein { width: 100%; font: inherit; font-family: var(--font-heading); font-weight: 600; font-size: 42px; line-height: 1.12; letter-spacing: -0.015em; border: 0; background: transparent; color: var(--color-text); padding: 0; caret-color: var(--color-accent); }
+  .titlein::placeholder { color: color-mix(in srgb, var(--color-text) 35%, transparent); }
+  .cell { width: 100%; font: inherit; font-size: 14px; border: 0; background: transparent; color: var(--color-text); padding: 2px 0; caret-color: var(--color-accent); }
+  .cell::placeholder { color: color-mix(in srgb, var(--color-text) 40%, transparent); }
+  .cell:focus-visible { outline: none; box-shadow: 0 1px 0 var(--color-accent); }
+  select.cell { cursor: pointer; }
+  textarea.cell { resize: vertical; min-height: 120px; line-height: 1.55; }
+  .meta { display: grid; grid-template-columns: minmax(0,1fr) 220px; gap: var(--space-6); align-items: end; }
+  .meta label, .sec h6 { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 var(--space-1); }
+  .sec h6 { margin-bottom: var(--space-3); }
+  .table td { padding: 6px var(--space-2); vertical-align: middle; }
+  .table th:first-child, .table td:first-child { padding-left: 0; width: 28px; color: color-mix(in srgb, var(--color-text) 50%, transparent); font-size: 12px; }
+  .table th:last-child, .table td:last-child { padding-right: 0; }
+  .chk { width: 18px; height: 18px; accent-color: var(--color-accent); cursor: pointer; margin: 0; display: block; }
+  .prog { display: flex; gap: 3px; }
+  .prog button { width: 22px; height: 16px; border: 1px solid var(--color-divider); background: transparent; padding: 0; cursor: pointer; border-radius: var(--radius-sm); }
+  .prog button:hover { border-color: var(--color-accent); }
+  .prog button.on { background: var(--color-accent); border-color: var(--color-accent); }
+  .prog button.on:hover { background: var(--color-accent-600); }
+  .rm { border: 0; background: none; color: color-mix(in srgb, var(--color-text) 35%, transparent); cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 4px; border-radius: var(--radius-sm); }
+  .rm:hover { color: var(--color-accent-2-700); background: var(--color-accent-2-100); }
+  .addrow { margin-top: var(--space-2); }
+  .tl { display: grid; grid-template-columns: 200px repeat(30, minmax(0,1fr)); gap: 0; font-size: 11px; }
+  .tl .hd { text-align: center; color: color-mix(in srgb, var(--color-text) 55%, transparent); padding-bottom: 4px; }
+  .tl .tname { display: flex; align-items: center; gap: 4px; padding-right: var(--space-2); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+  .tl .day { height: 30px; border: 0; padding: 0; cursor: pointer; background: transparent; border-left: 1px solid color-mix(in srgb, var(--color-text) 7%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+  .tl .day:hover { background: var(--color-accent-100); }
+  .tl .day.on { background: var(--color-accent); }
+  .tl .day.on:hover { background: var(--color-accent-600); }
+  .actions { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .actions .spacer { flex: 1; }
+  .danger { color: var(--color-accent-2-700); }
+  .danger:hover { background: var(--color-accent-2-100); }
+  @media print {
+    body { background: #fff; }
+    #app { max-width: none; padding: 0; }
+    .no-print { display: none !important; }
+    .sheet { gap: 28px; }
+    .prog button, .tl .day { border-color: #999; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tl .day, .table td { border-bottom-color: #bbb; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(() => {
+const LS = 'pp.vault';
+const $ = s => document.querySelector(s);
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = u => btoa(String.fromCharCode(...u));
+const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const S = { key: null, salt: null, data: null, view: 'lock', pid: null, q: '', filter: 'active', err: '' };
+
+/* ---------- crypto ---------- */
+async function deriveKey(pw, salt) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function encryptData() {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, S.key, enc.encode(JSON.stringify(S.data)));
+  return { v: 1, salt: b64(S.salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
+}
+async function decryptVault(vault, key) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub64(vault.iv) }, key, ub64(vault.ct));
+  return JSON.parse(dec.decode(pt));
+}
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(saveNow, 400); }
+async function saveNow() { if (!S.key) return; localStorage.setItem(LS, JSON.stringify(await encryptData())); }
+
+/* ---------- model ---------- */
+const newProject = () => ({
+  id: uid(), name: '', objective: '', due: '', status: 'active', created: Date.now(), notes: '',
+  milestones: Array.from({ length: 4 }, () => ({ name: '', progress: 0, due: '', done: false })),
+  timeline: Array.from({ length: 6 }, () => ({ name: '', days: Array(30).fill(false) })),
+  tasks: Array.from({ length: 10 }, () => ({ name: '', start: '', end: '', prio: '', done: false })),
+});
+const cur = () => S.data.projects.find(p => p.id === S.pid);
+function setPath(obj, path, val) {
+  const ks = path.split('.'); const last = ks.pop();
+  const t = ks.reduce((o, k) => o[k], obj); t[last] = val;
+}
+
+/* ---------- views ---------- */
+function render() {
+  const app = $('#app');
+  if (S.view === 'lock') return app.innerHTML = lockView();
+  app.innerHTML = topbar() + (S.view === 'project' ? projectView(cur()) : listView());
+  if (S.view === 'list') { const q = $('#q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
+}
+
+function lockView() {
+  const has = !!localStorage.getItem(LS);
+  return `<div class="lock">
+    <h1>Project <span>Planner</span></h1>
+    ${has ? `
+      <p class="hint">Enter your password to unlock your projects.</p>
+      <form id="unlock" class="lock" style="margin:0">
+        <input class="input" type="password" id="pw" placeholder="Password" autofocus autocomplete="current-password">
+        <div class="err">${esc(S.err)}</div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Unlock</button><span class="spacer"></span><button class="btn btn-ghost" type="button" data-action="import">Restore from backup…</button></div>
+      </form>` : `
+      <p class="hint">First time here. Choose a password: everything you write is encrypted with it in this browser. There is no recovery if you forget it.</p>
+      <form id="setup" class="lock" style="margin:0">
+        <input class="input" type="password" id="pw" placeholder="Password" autofocus autocomplete="new-password">
+        <input class="input" type="password" id="pw2" placeholder="Repeat password" autocomplete="new-password">
+        <div class="err">${esc(S.err)}</div>
+        <div class="actions"><button class="btn btn-primary" type="submit">Create</button><span class="spacer"></span><button class="btn btn-ghost" type="button" data-action="import">Restore from backup…</button></div>
+      </form>`}
+    <input type="file" id="file" accept="application/json,.json" hidden>
+  </div>`;
+}
+
+function topbar() {
+  return `<div class="topbar no-print">
+    <div class="brand" data-action="home">Project <span>Planner</span></div>
+    <button class="btn btn-secondary" data-action="export">Export backup</button>
+    <button class="btn btn-secondary" data-action="import">Import</button>
+    <button class="btn btn-ghost" data-action="lock">Lock</button>
+    <input type="file" id="file" accept="application/json,.json" hidden>
+  </div>`;
+}
+
+function listView() {
+  const q = S.q.trim().toLowerCase();
+  const ps = S.data.projects
+    .filter(p => S.filter === 'all' || p.status === S.filter)
+    .filter(p => !q || (p.name + ' ' + p.objective).toLowerCase().includes(q))
+    .sort((a, b) => b.created - a.created);
+  const seg = ['active', 'completed', 'archived', 'all'].map(f =>
+    `<label class="seg-opt"><input type="radio" name="f" value="${f}" ${S.filter === f ? 'checked' : ''}>${f[0].toUpperCase() + f.slice(1)}</label>`).join('');
+  return `<div class="toolbar">
+      <input class="input" id="q" type="search" placeholder="Search projects" value="${esc(S.q)}">
+      <div class="seg" id="filter">${seg}</div>
+      <span style="flex:1"></span>
+      <button class="btn btn-primary" data-action="new">New project</button>
+    </div>
+    <div class="plist">${ps.length ? ps.map(p => `
+      <button class="prow" data-action="open" data-id="${p.id}">
+        <div><div class="pname">${esc(p.name) || '<span class="text-muted">Untitled project</span>'}</div>${p.objective ? `<div class="pobj">${esc(p.objective)}</div>` : ''}</div>
+        <div class="pdue">${p.due ? 'Due ' + esc(p.due) : ''}</div>
+        <div><span class="tag ${p.status === 'active' ? 'tag-accent' : 'tag-neutral'}">${p.status}</span></div>
+      </button>`).join('') : `<div class="empty">${S.data.projects.length ? 'No projects match.' : 'No projects yet. Start with “New project”.'}</div>`}
+    </div>`;
+}
+
+function projectView(p) {
+  const prio = v => ['', 'L', 'M', 'H'].map(o => `<option value="${o}" ${v === o ? 'selected' : ''}>${o || '–'}</option>`).join('');
+  return `<div class="sheet">
+    <div class="actions no-print">
+      <button class="btn btn-ghost" data-action="home">← All projects</button>
+      <span class="spacer"></span>
+      <button class="btn btn-secondary" data-action="print">Print / PDF</button>
+      <button class="btn btn-secondary" data-action="status" data-v="${p.status === 'completed' ? 'active' : 'completed'}">${p.status === 'completed' ? 'Reopen' : 'Mark completed'}</button>
+      <button class="btn btn-secondary" data-action="status" data-v="${p.status === 'archived' ? 'active' : 'archived'}">${p.status === 'archived' ? 'Unarchive' : 'Archive'}</button>
+      <button class="btn btn-ghost danger" data-action="delete">Delete</button>
+    </div>
+    <div>
+      <input class="titlein" data-bind="name" value="${esc(p.name)}" placeholder="Project name">
+      <div class="meta" style="margin-top:var(--space-4)">
+        <div><label>Objective</label><input class="cell" data-bind="objective" value="${esc(p.objective)}" placeholder="What does done look like?"></div>
+        <div><label>Due</label><input class="cell" type="date" data-bind="due" value="${esc(p.due)}"></div>
+      </div>
+    </div>
+
+    <div class="sec"><h6>Project Milestones</h6>
+      <table class="table"><thead><tr><th>#</th><th>Milestone</th><th style="width:150px">Progress</th><th style="width:150px">Due</th><th style="width:30px">✓</th><th style="width:30px"></th></tr></thead><tbody>
+      ${p.milestones.map((m, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><input class="cell" data-bind="milestones.${i}.name" value="${esc(m.name)}"></td>
+        <td><div class="prog">${[0,1,2,3,4].map(k => `<button type="button" class="${k < m.progress ? 'on' : ''}" data-action="prog" data-i="${i}" data-k="${k}" aria-label="Progress ${(k+1)*20}%"></button>`).join('')}</div></td>
+        <td><input class="cell" type="date" data-bind="milestones.${i}.due" value="${esc(m.due)}"></td>
+        <td><input class="chk" type="checkbox" data-bind="milestones.${i}.done" ${m.done ? 'checked' : ''}></td>
+        <td class="no-print"><button class="rm" data-action="rm" data-list="milestones" data-i="${i}" aria-label="Remove">×</button></td>
+      </tr>`).join('')}</tbody></table>
+      <button class="btn btn-ghost addrow no-print" data-action="add" data-list="milestones">+ Milestone</button>
+    </div>
+
+    <div class="sec"><h6>Project Timeline</h6>
+      <div class="tl">
+        <div class="hd" style="text-align:left">Task</div>
+        ${Array.from({ length: 30 }, (_, d) => `<div class="hd">${d + 1}</div>`).join('')}
+        ${p.timeline.map((r, i) => `
+          <div class="tname"><input class="cell" data-bind="timeline.${i}.name" value="${esc(r.name)}"><button class="rm no-print" data-action="rm" data-list="timeline" data-i="${i}" aria-label="Remove">×</button></div>
+          ${r.days.map((on, d) => `<button type="button" class="day ${on ? 'on' : ''}" data-action="day" data-i="${i}" data-d="${d}" aria-pressed="${on}" aria-label="Day ${d + 1}"></button>`).join('')}`).join('')}
+      </div>
+      <button class="btn btn-ghost addrow no-print" data-action="add" data-list="timeline">+ Row</button>
+    </div>
+
+    <div class="sec"><h6>Project Tasks</h6>
+      <table class="table"><thead><tr><th>#</th><th>Task</th><th style="width:150px">Start</th><th style="width:150px">End</th><th style="width:70px">Prio</th><th style="width:30px">✓</th><th style="width:30px"></th></tr></thead><tbody>
+      ${p.tasks.map((t, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><input class="cell" data-bind="tasks.${i}.name" value="${esc(t.name)}"></td>
+        <td><input class="cell" type="date" data-bind="tasks.${i}.start" value="${esc(t.start)}"></td>
+        <td><input class="cell" type="date" data-bind="tasks.${i}.end" value="${esc(t.end)}"></td>
+        <td><select class="cell" data-bind="tasks.${i}.prio">${prio(t.prio)}</select></td>
+        <td><input class="chk" type="checkbox" data-bind="tasks.${i}.done" ${t.done ? 'checked' : ''}></td>
+        <td class="no-print"><button class="rm" data-action="rm" data-list="tasks" data-i="${i}" aria-label="Remove">×</button></td>
+      </tr>`).join('')}</tbody></table>
+      <button class="btn btn-ghost addrow no-print" data-action="add" data-list="tasks">+ Task</button>
+    </div>
+
+    <div class="sec"><h6>Notes</h6>
+      <textarea class="cell" data-bind="notes" placeholder="Anything worth remembering">${esc(p.notes)}</textarea>
+    </div>
+  </div>`;
+}
+
+/* ---------- events ---------- */
+const app = $('#app');
+app.addEventListener('submit', async e => {
+  e.preventDefault();
+  const pw = $('#pw').value;
+  if (e.target.id === 'setup') {
+    if (pw.length < 6) { S.err = 'Use at least 6 characters.'; return render(); }
+    if (pw !== $('#pw2').value) { S.err = 'Passwords do not match.'; return render(); }
+    S.salt = crypto.getRandomValues(new Uint8Array(16));
+    S.key = await deriveKey(pw, S.salt);
+    S.data = { projects: [] };
+    await saveNow();
+  } else {
+    const vault = JSON.parse(localStorage.getItem(LS));
+    try {
+      const salt = ub64(vault.salt); const key = await deriveKey(pw, salt);
+      S.data = await decryptVault(vault, key); S.key = key; S.salt = salt;
+    } catch { S.err = 'Wrong password.'; return render(); }
+  }
+  S.err = ''; S.view = 'list'; render();
+});
+
+app.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'q') { S.q = t.value; return render(); }
+  const b = t.dataset.bind; if (!b) return;
+  setPath(cur(), b, t.type === 'checkbox' ? t.checked : t.value); save();
+});
+app.addEventListener('change', e => {
+  if (e.target.name === 'f') { S.filter = e.target.value; render(); }
+  if (e.target.id === 'file') importFile(e.target.files[0]);
+});
+
+app.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  const a = el.dataset.action, p = S.view === 'project' ? cur() : null;
+  const acts = {
+    home() { S.view = 'list'; S.pid = null; render(); },
+    lock() { S.key = null; S.data = null; S.view = 'lock'; render(); },
+    new() { const np = newProject(); S.data.projects.push(np); S.pid = np.id; S.view = 'project'; save(); render(); $('.titlein').focus(); },
+    open() { S.pid = el.dataset.id; S.view = 'project'; render(); window.scrollTo(0, 0); },
+    print() { window.print(); },
+    status() { p.status = el.dataset.v; save(); render(); },
+    delete() { if (!confirm('Delete this project? This cannot be undone.')) return; S.data.projects = S.data.projects.filter(x => x.id !== p.id); acts.home(); save(); },
+    prog() { const m = p.milestones[+el.dataset.i], k = +el.dataset.k; m.progress = m.progress === k + 1 ? k : k + 1; save(); render(); },
+    day() { const r = p.timeline[+el.dataset.i], d = +el.dataset.d; r.days[d] = !r.days[d]; el.classList.toggle('on', r.days[d]); el.setAttribute('aria-pressed', r.days[d]); save(); },
+    add() { const l = el.dataset.list; p[l].push(l === 'timeline' ? { name: '', days: Array(30).fill(false) } : l === 'milestones' ? { name: '', progress: 0, due: '', done: false } : { name: '', start: '', end: '', prio: '', done: false }); save(); render(); },
+    rm() { p[el.dataset.list].splice(+el.dataset.i, 1); save(); render(); },
+    export() {
+      const v = localStorage.getItem(LS); if (!v) return;
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([v], { type: 'application/json' }));
+      a.download = `project-planner-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+    },
+    import() { $('#file').click(); },
+  };
+  acts[a] && acts[a]();
+});
+
+async function importFile(f) {
+  if (!f) return;
+  try {
+    const v = JSON.parse(await f.text());
+    if (!v.salt || !v.iv || !v.ct) throw 0;
+    if (localStorage.getItem(LS) && !confirm('Replace everything stored in this browser with the backup? Current projects here will be lost.')) return;
+    localStorage.setItem(LS, JSON.stringify(v));
+    S.key = null; S.data = null; S.view = 'lock'; S.err = 'Backup restored. Unlock with the password it was created with.'; render();
+  } catch { alert('That file is not a Project Planner backup.'); }
+}
+
+render();
+})();
+</script>
+</body>
+</html>
