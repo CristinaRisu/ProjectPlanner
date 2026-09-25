@@ -1,17 +1,23 @@
 # Project Planner
 
-A private, password-protected project planner that runs entirely in your browser. Create as many projects as you want, each with an objective, milestones, a 30-day timeline, tasks and notes. Print any project or save it as a PDF.
+A private, password-protected planner for lab and analysis projects that runs entirely in your browser. Each project is one sheet: objective, result, milestones, a 30-day timeline, tasks and structured notes for data, samples, pipelines and parameters. Print any project or save it as a PDF.
 
-**[Try the demo](https://cristinarisu.github.io/ProjectPlanner/?demo)** (sample data, nothing is saved)
+**[Try the demo](https://cristinarisu.github.io/ProjectPlanner/?demo)** (sample projects, nothing is saved)
 
 ![Project list](docs/list.png)
 
 ## Features
 
-- **One sheet per project**: objective and due date, milestones with a 5-step progress bar, a 30-day timeline you fill by clicking days, tasks with start/end dates and priority, free notes.
+- **One sheet per project**
+  - Objective and due date. Due dates turn amber when a week or less is left and red when overdue.
+  - **Result**: mark the project as *Pending*, *Worked*, *Partial* or *Failed* and write what you found and the next step. The verdict is also shown in the project list.
+  - **Milestones** with a 5-step progress bar and due date.
+  - **30-day timeline** you fill by clicking days.
+  - **Tasks** with start/end dates, priority (L/M/H) and a done checkbox.
+  - **Notes** pre-filled with prompts: *Data location*, *Samples*, *Pipeline and versions*, *Genome and annotation*, *Parameters*.
 - **Encrypted with your password**: data is encrypted (AES-256-GCM, key derived with PBKDF2) before it is stored. Without the password nobody can read it, even with access to the code or the files.
-- **Search and filter** by active, completed or archived.
-- **Print / PDF** a clean version of any project.
+- **Search** across names, objectives, results and notes, and **filter** by active, completed or archived.
+- **Print / PDF** a clean version of any project. Empty rows are left out and all text is printed in full.
 - **Backups**: export an encrypted `.json` file and import it on any computer.
 - **No server, no account, no tracking.** Two files: `index.html` and `styles.css`.
 

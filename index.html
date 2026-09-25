@@ -453,14 +453,16 @@ if (/[?&]demo\b/.test(location.search)) {
   const days = (a, b) => Array.from({ length: 30 }, (_, i) => i >= a && i <= b);
   const P = (o) => Object.assign(newProject(), o);
   S.data = { projects: [
-    P({ name: 'Garden renovation', objective: 'Replant the back garden with low-water plants before the autumn rains.', outcome: 'Soil prep running late: the rotavator was booked out. Planting may slip one week.', verdict: 'partial', due: '2026-10-31', created: 3,
-      milestones: [{ name: 'Design and plant list', progress: 5, due: '2026-09-20', done: true }, { name: 'Clear and prepare soil', progress: 3, due: '2026-10-05', done: false }, { name: 'Planting', progress: 0, due: '2026-10-25', done: false }],
-      timeline: [{ name: 'Design', days: days(0, 5) }, { name: 'Soil prep', days: days(6, 14) }, { name: 'Irrigation', days: days(12, 18) }, { name: 'Planting', days: days(19, 27) }],
-      tasks: [{ name: 'Measure beds and sketch layout', start: '2026-09-01', end: '2026-09-03', prio: 'H', done: true }, { name: 'Order plants from nursery', start: '2026-09-15', end: '2026-09-18', prio: 'M', done: true }, { name: 'Rent a rotavator', start: '2026-10-01', end: '2026-10-02', prio: 'M', done: false }, { name: 'Install drip irrigation lines', start: '2026-10-12', end: '2026-10-18', prio: 'H', done: false }],
-      notes: 'Nursery: ask for lavender, rosemary and salvia.\nKeep the old olive tree.' }),
-    P({ name: 'Half marathon training', objective: 'Finish the city half marathon under 2 hours.', due: '2026-11-15', created: 2,
-      milestones: [{ name: '10 km without stopping', progress: 4, due: '2026-10-01', done: false }, { name: '18 km long run', progress: 1, due: '2026-11-01', done: false }] }),
-    P({ name: 'Portfolio website', objective: 'Publish a simple site with my last five projects.', outcome: 'Live on GitHub Pages. Next: add a contact form.', verdict: 'worked', due: '2026-08-30', status: 'completed', created: 1 }),
+    P({ name: 'H3K27ac ChIP-seq in myoblasts', objective: 'Map active enhancers in C2C12 cells at day 0, 2 and 5 of differentiation to find enhancers gained during myogenesis.', due: '2026-10-30', created: 4,
+      outcome: 'Day 0 and day 2 libraries pass QC (FRiP > 0.2). Day 5 replicate 2 has low complexity; re-sequencing is booked.', verdict: 'partial',
+      milestones: [{ name: 'Chromatin collection and sonication check', progress: 5, due: '2026-09-12', done: true }, { name: 'IP, library prep and sequencing', progress: 4, due: '2026-09-26', done: false }, { name: 'Peak calling and differential analysis', progress: 1, due: '2026-10-16', done: false }, { name: 'Motif enrichment and figures', progress: 0, due: '2026-10-30', done: false }],
+      timeline: [{ name: 'Cell culture and crosslinking', days: days(0, 6) }, { name: 'ChIP and libraries', days: days(7, 12) }, { name: 'Sequencing', days: days(13, 17) }, { name: 'nf-core/chipseq', days: days(18, 21) }, { name: 'DiffBind and HOMER', days: days(22, 29) }],
+      tasks: [{ name: 'Check sonication fragment size on Bioanalyzer (200-500 bp)', start: '2026-09-08', end: '2026-09-09', prio: 'H', done: true }, { name: 'Titrate H3K27ac antibody (ab4729) on day 0 chromatin', start: '2026-09-10', end: '2026-09-12', prio: 'H', done: true }, { name: 'Submit libraries to the genomics core', start: '2026-09-22', end: '2026-09-22', prio: 'M', done: true }, { name: 'Run nf-core/chipseq with input controls', start: '2026-10-01', end: '2026-10-03', prio: 'H', done: false }, { name: 'Differential peaks day 5 vs day 0 with DiffBind', start: '2026-10-06', end: '2026-10-10', prio: 'M', done: false }],
+      notes: 'Data location:\n/lab/seq/2026-09_chip_c2c12/\n\nSamples:\nD0, D2, D5 x 2 biological replicates + input per time point\n\nPipeline and versions:\nnf-core/chipseq 2.1.0, MACS3 3.0.2, DiffBind 3.14\n\nGenome and annotation:\nmm39, GENCODE vM35\n\nParameters:\n--narrow_peak false --macs_gsize 2.7e9\n' }),
+    P({ name: 'CRISPR knockout of Pax7 in satellite cells', objective: 'Generate a clonal Pax7 knockout line and confirm loss of protein by western blot.', due: '2026-11-20', created: 3,
+      milestones: [{ name: 'Design and clone two sgRNAs', progress: 5, due: '2026-09-15', done: true }, { name: 'Transfection and single-cell sorting', progress: 2, due: '2026-10-10', done: false }, { name: 'Genotyping and western blot', progress: 0, due: '2026-11-20', done: false }] }),
+    P({ name: 'Single-cell RNA-seq of regenerating muscle', objective: 'Compare fibro-adipogenic progenitor subpopulations at day 3 and day 7 after injury.', due: '2026-12-15', created: 2 }),
+    P({ name: 'qPCR validation of myogenic markers', objective: 'Confirm Myod1, Myog and Myh3 induction during differentiation.', outcome: 'All three markers induced as expected. Gapdh and Rplp0 stable as reference genes.', verdict: 'worked', due: '2026-08-29', status: 'completed', created: 1 }),
   ] };
   S.view = 'list'; S.demo = true;
 }
