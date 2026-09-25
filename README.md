@@ -2,7 +2,7 @@
 
 A private, password-protected project planner that runs entirely in your browser. Create as many projects as you want, each with an objective, milestones, a 30-day timeline, tasks and notes. Print any project or save it as a PDF.
 
-**[Try the demo](https://CristinaRisu.github.io/planner/?demo)** (sample data, nothing is saved)
+**[Try the demo](https://cristinarisu.github.io/ProjectPlanner/?demo)** (sample data, nothing is saved)
 
 ![Project list](docs/list.png)
 
