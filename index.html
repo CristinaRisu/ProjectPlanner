@@ -123,18 +123,34 @@ async function deriveKey(pw, salt) {
   const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
-async function encryptData() {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, S.key, enc.encode(JSON.stringify(S.data)));
-  return { v: 1, salt: b64(S.salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
-}
 async function decryptVault(vault, key) {
   const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub64(vault.iv) }, key, ub64(vault.ct));
   return JSON.parse(dec.decode(pt));
 }
-let saveT;
-function save() { clearTimeout(saveT); saveT = setTimeout(saveNow, 400); }
-async function saveNow() { if (!S.key) return; localStorage.setItem(LS, JSON.stringify(await encryptData())); }
+let saveT = null, dirty = false, pending = 0, chain = Promise.resolve();
+async function writeVault(key, salt, json) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(json));
+  localStorage.setItem(LS, JSON.stringify({ v: 1, salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) }));
+}
+function save() { dirty = true; clearTimeout(saveT); saveT = setTimeout(flush, 400); }
+function flush() {
+  clearTimeout(saveT); saveT = null;
+  if (!dirty || !S.key) return chain;
+  dirty = false; pending++;
+  // Snapshot key and data now, before lock() can clear them
+  const key = S.key, salt = S.salt, json = JSON.stringify(S.data);
+  chain = chain
+    .then(() => writeVault(key, salt, json))
+    .catch(err => { dirty = true; console.error('Save failed', err); })
+    .finally(() => { pending--; });
+  return chain;
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+window.addEventListener('pagehide', flush);
+window.addEventListener('beforeunload', e => {
+  if (dirty || pending) { flush(); e.preventDefault(); e.returnValue = ''; }
+});
 
 /* ---------- model ---------- */
 const newProject = () => ({
@@ -319,7 +335,7 @@ app.addEventListener('submit', async e => {
     S.salt = crypto.getRandomValues(new Uint8Array(16));
     S.key = await deriveKey(pw, S.salt);
     S.data = { projects: [] };
-    await saveNow();
+    dirty = true; await flush();
   } else {
     const vault = JSON.parse(localStorage.getItem(LS));
     try {
@@ -347,7 +363,7 @@ app.addEventListener('click', e => {
   const a = el.dataset.action, p = S.view === 'project' ? cur() : null;
   const acts = {
     home() { S.view = 'list'; S.pid = null; render(); },
-    lock() { S.key = null; S.data = null; S.view = 'lock'; render(); },
+    async lock() { await flush(); S.key = null; S.data = null; S.view = 'lock'; render(); },
     new() { const np = newProject(); S.data.projects.push(np); S.pid = np.id; S.view = 'project'; save(); render(); $('.titlein').focus(); },
     open() { S.pid = el.dataset.id; S.view = 'project'; render(); window.scrollTo(0, 0); },
     print() { fillPrint(); window.print(); },
@@ -374,6 +390,7 @@ async function importFile(f) {
     const v = JSON.parse(await f.text());
     if (!v.salt || !v.iv || !v.ct) throw 0;
     if (localStorage.getItem(LS) && !confirm('Replace everything stored in this browser with the backup? Current projects here will be lost.')) return;
+    await flush();
     localStorage.setItem(LS, JSON.stringify(v));
     S.key = null; S.data = null; S.view = 'lock'; S.err = 'Backup restored. Unlock with the password it was created with.'; render();
   } catch { alert('That file is not a Project Planner backup.'); }
