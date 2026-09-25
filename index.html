@@ -10,7 +10,8 @@
   body { min-height: 100vh; }
   #app { max-width: 1040px; margin: 0 auto; padding: var(--space-4) var(--space-6) var(--space-8); }
   .topbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0 var(--space-6); }
-  .brand { font-family: var(--font-heading); font-weight: 600; font-size: 20px; margin-right: auto; cursor: pointer; }
+  .brand { font-family: var(--font-heading); font-weight: 600; font-size: 20px; margin-right: auto; cursor: pointer; white-space: nowrap; }
+  .topbar .btn, .toolbar .btn, .actions .btn, .addrow, .tag { white-space: nowrap; }
   .brand span { font-weight: 400; }
   .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
   .toolbar .input { max-width: 320px; }
@@ -212,7 +213,8 @@ function lockView() {
 
 function topbar() {
   return `<div class="topbar no-print">
-    <div class="brand" data-action="home">Project <span>Planner</span></div>
+    <div style="margin-right:auto;display:flex;align-items:center;gap:var(--space-3)"><div class="brand" style="margin:0" data-action="home">Project <span>Planner</span></div>
+    ${S.demo ? '<span class="tag tag-accent-2">Demo · nothing is saved</span>' : ''}</div>
     <button class="btn btn-secondary" data-action="export">Export backup</button>
     <button class="btn btn-secondary" data-action="import">Import</button>
     <button class="btn btn-ghost" data-action="lock">Lock</button>
@@ -356,11 +358,12 @@ app.addEventListener('click', e => {
     add() { const l = el.dataset.list; p[l].push(l === 'timeline' ? { name: '', days: Array(30).fill(false) } : l === 'milestones' ? { name: '', progress: 0, due: '', done: false } : { name: '', start: '', end: '', prio: '', done: false }); save(); render(); },
     rm() { p[el.dataset.list].splice(+el.dataset.i, 1); save(); render(); },
     export() {
+      if (S.demo) return alert('Demo mode: nothing to export.');
       const v = localStorage.getItem(LS); if (!v) return;
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([v], { type: 'application/json' }));
       a.download = `project-planner-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(a.href);
     },
-    import() { $('#file').click(); },
+    import() { if (S.demo) return alert('Demo mode: open the page without ?demo to use your own data.'); $('#file').click(); },
   };
   acts[a] && acts[a]();
 });
@@ -376,6 +379,21 @@ async function importFile(f) {
   } catch { alert('That file is not a Project Planner backup.'); }
 }
 
+if (/[?&]demo\b/.test(location.search)) {
+  const days = (a, b) => Array.from({ length: 30 }, (_, i) => i >= a && i <= b);
+  const P = (o) => Object.assign(newProject(), o);
+  S.data = { projects: [
+    P({ name: 'Garden renovation', objective: 'Replant the back garden with low-water plants before the autumn rains.', due: '2026-10-31', created: 3,
+      milestones: [{ name: 'Design and plant list', progress: 5, due: '2026-09-20', done: true }, { name: 'Clear and prepare soil', progress: 3, due: '2026-10-05', done: false }, { name: 'Planting', progress: 0, due: '2026-10-25', done: false }],
+      timeline: [{ name: 'Design', days: days(0, 5) }, { name: 'Soil prep', days: days(6, 14) }, { name: 'Irrigation', days: days(12, 18) }, { name: 'Planting', days: days(19, 27) }],
+      tasks: [{ name: 'Measure beds and sketch layout', start: '2026-09-01', end: '2026-09-03', prio: 'H', done: true }, { name: 'Order plants from nursery', start: '2026-09-15', end: '2026-09-18', prio: 'M', done: true }, { name: 'Rent a rotavator', start: '2026-10-01', end: '2026-10-02', prio: 'M', done: false }, { name: 'Install drip irrigation lines', start: '2026-10-12', end: '2026-10-18', prio: 'H', done: false }],
+      notes: 'Nursery: ask for lavender, rosemary and salvia.\nKeep the old olive tree.' }),
+    P({ name: 'Half marathon training', objective: 'Finish the city half marathon under 2 hours.', due: '2026-11-15', created: 2,
+      milestones: [{ name: '10 km without stopping', progress: 4, due: '2026-10-01', done: false }, { name: '18 km long run', progress: 1, due: '2026-11-01', done: false }] }),
+    P({ name: 'Portfolio website', objective: 'Publish a simple site with my last five projects.', due: '2026-08-30', status: 'completed', created: 1 }),
+  ] };
+  S.view = 'list'; S.demo = true;
+}
 render();
 })();
 </script>
