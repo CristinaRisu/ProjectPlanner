@@ -30,7 +30,7 @@ You need a free GitHub account.
 1. Click **Fork** (top right of this page), then **Create fork**.
 2. In your fork go to **Settings → Pages**.
 3. Under *Build and deployment*, choose **Deploy from a branch**, branch **main**, folder **/ (root)**, then **Save**.
-4. After 1–2 minutes your planner is live at `https://YOUR-USERNAME.github.io/planner/`.
+4. After 1–2 minutes your planner is live at `https://YOUR-USERNAME.github.io/ProjectPlanner/` (if you renamed the fork, use that name instead).
 5. Open it and choose a password. **There is no way to recover it**, so keep it somewhere safe.
 
 You can also download `index.html` and `styles.css` and open `index.html` directly on your computer, without GitHub.

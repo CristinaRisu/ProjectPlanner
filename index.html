@@ -16,7 +16,7 @@
   .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
   .toolbar .input { max-width: 320px; }
   .plist { display: flex; flex-direction: column; }
-  .prow { display: grid; grid-template-columns: minmax(0,1fr) 140px 120px; gap: var(--space-4); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); cursor: pointer; text-align: left; background: none; border-top: 0; border-left: 0; border-right: 0; font: inherit; color: inherit; width: 100%; }
+  .prow { display: grid; grid-template-columns: minmax(0,1fr) 130px 90px 100px; gap: var(--space-4); align-items: baseline; padding: var(--space-3) 0; border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); cursor: pointer; text-align: left; background: none; border-top: 0; border-left: 0; border-right: 0; font: inherit; color: inherit; width: 100%; }
   .prow:hover .pname { color: var(--color-accent-700); }
   .pname { font-family: var(--font-heading); font-weight: 600; font-size: 19px; }
   .pobj { font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin-top: 3px; }
@@ -63,7 +63,34 @@
   .actions .spacer { flex: 1; }
   .danger { color: var(--color-accent-2-700); }
   .danger:hover { background: var(--color-accent-2-100); }
-  #print { display: none; }
+  /* result colors: press-ink overprints (C+Y green, process yellow, magenta) */
+.v-worked  { --v: #00875a; }
+.v-partial { --v: var(--color-process-yellow); }
+.v-failed  { --v: var(--color-accent-2); }
+.v-pending { --v: var(--color-neutral-400); }
+.outcome { border-left: 4px solid var(--v); background: color-mix(in srgb, var(--v) 9%, transparent); padding: var(--space-3) var(--space-4); border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-top: var(--space-6); }
+.outcome-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-2); }
+.outcome > label, .outcome-head > label { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0; }
+.verdict { background: var(--color-bg); }
+.verdict .seg-opt { padding: 5px 11px; font-size: 12px; }
+.verdict .seg-opt:has(input:checked) { background: var(--v); color: #fff; }
+.verdict .seg-opt.v-partial:has(input:checked) { color: var(--color-text); }
+.vtag { background: color-mix(in srgb, var(--v) 16%, transparent); color: color-mix(in srgb, var(--v) 55%, var(--color-text)); }
+.vtag.v-partial { background: color-mix(in srgb, var(--v) 22%, transparent); color: #6b5200; }
+.prow { border-left: 3px solid var(--v); padding-left: var(--space-3); }
+.due-over { color: var(--color-accent-2-700) !important; font-weight: 600; }
+.due-soon { color: #8a6d00 !important; font-weight: 600; }
+select.prio-H { color: var(--color-accent-2-700); font-weight: 600; }
+select.prio-M { color: #8a6d00; font-weight: 600; }
+select.prio-L { color: var(--color-accent-700); }
+.prio-chip { display: inline-block; min-width: 20px; text-align: center; font-weight: 600; }
+.prio-chip.prio-H { color: var(--color-accent-2-700); }
+.prio-chip.prio-M { color: #8a6d00; }
+.prio-chip.prio-L { color: var(--color-accent-700); }
+.prog.full button.on { background: #00875a; border-color: #00875a; }
+tr.done .cell, tr.done td:first-child { color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+tr.done textarea.cell { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--color-text) 35%, transparent); }
+#print { display: none; }
   @media print {
     body { background: #fff; }
     #app { display: none !important; }
@@ -80,6 +107,10 @@
     #print .pbar { display: flex; gap: 2px; padding-top: 3px; }
     #print .pbar i { width: 14px; height: 10px; border: 1px solid #999; border-radius: 1px; }
     #print .pbar i.on { background: var(--color-accent); border-color: var(--color-accent); }
+#print .pbar.full i.on { background: #00875a; border-color: #00875a; }
+#print .outcome { margin-top: 16px; padding: 8px 12px; }
+#print .outcome .vname { font-weight: 600; color: color-mix(in srgb, var(--v) 55%, #201e1d); }
+#print tr.done td { color: #777; }
     #print .tl { grid-template-columns: 150px repeat(30, minmax(0,1fr)); font-size: 8pt; }
     #print .tl .tname { font-size: 9pt; padding: 3px 6px 3px 0; overflow-wrap: anywhere; }
     #print .tl .day { height: auto; min-height: 20px; border-left-color: #ccc; border-bottom-color: #bbb; }
@@ -116,6 +147,16 @@ const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+const NOTES_TEMPLATE = 'Data location:\n\nSamples:\n\nPipeline and versions:\n\nGenome and annotation:\n\nParameters:\n';
+const VERDICTS = [['', 'Pending'], ['worked', 'Worked'], ['partial', 'Partial'], ['failed', 'Failed']];
+const vcls = v => 'v-' + (v || 'pending');
+const vname = v => (VERDICTS.find(x => x[0] === (v || '')) || VERDICTS[0])[1];
+function dueCls(p) {
+  if (!p.due || p.status !== 'active') return '';
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const days = (new Date(p.due + 'T00:00') - t) / 864e5;
+  return days < 0 ? 'due-over' : days <= 7 ? 'due-soon' : '';
+}
 const S = { key: null, salt: null, data: null, view: 'lock', pid: null, q: '', filter: 'active', err: '' };
 
 /* ---------- crypto ---------- */
@@ -154,7 +195,7 @@ window.addEventListener('beforeunload', e => {
 
 /* ---------- model ---------- */
 const newProject = () => ({
-  id: uid(), name: '', objective: '', due: '', status: 'active', created: Date.now(), notes: '',
+  id: uid(), name: '', objective: '', outcome: '', verdict: '', due: '', status: 'active', created: Date.now(), notes: NOTES_TEMPLATE,
   milestones: Array.from({ length: 4 }, () => ({ name: '', progress: 0, due: '', done: false })),
   timeline: Array.from({ length: 6 }, () => ({ name: '', days: Array(30).fill(false) })),
   tasks: Array.from({ length: 10 }, () => ({ name: '', start: '', end: '', prio: '', done: false })),
@@ -192,14 +233,15 @@ function printView(p) {
         <div><label>Objective</label><div class="ptxt">${t(p.objective)}</div></div>
         <div><label>Due</label><div class="ptxt">${d(p.due)}</div></div>
       </div>
+      <div class="outcome ${vcls(p.verdict)}"><label>Result: <span class="vname">${vname(p.verdict)}</span></label><div class="ptxt">${t(p.outcome)}</div></div>
     </div>
     ${ms.length ? `<div class="sec"><h6>Project Milestones</h6><table class="table">${cols(['24px','auto','90px','90px','28px'])}<thead><tr><th>#</th><th>Milestone</th><th>Progress</th><th>Due</th><th>✓</th></tr></thead><tbody>
-      ${ms.map((m, i) => `<tr><td>${i + 1}</td><td>${t(m.name)}</td><td><div class="pbar">${[0,1,2,3,4].map(k => `<i class="${k < m.progress ? 'on' : ''}"></i>`).join('')}</div></td><td>${d(m.due)}</td><td>${m.done ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      ${ms.map((m, i) => `<tr class="${m.done ? 'done' : ''}"><td>${i + 1}</td><td>${t(m.name)}</td><td><div class="pbar ${m.progress >= 5 ? 'full' : ''}">${[0,1,2,3,4].map(k => `<i class="${k < m.progress ? 'on' : ''}"></i>`).join('')}</div></td><td>${d(m.due)}</td><td>${m.done ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
     ${tl.length ? `<div class="sec"><h6>Project Timeline</h6><div class="tl"><div class="hd" style="text-align:left">Task</div>${Array.from({ length: 30 }, (_, i) => `<div class="hd">${i + 1}</div>`).join('')}
       ${tl.map(r => `<div class="tname">${t(r.name)}</div>${r.days.map(on => `<div class="day ${on ? 'on' : ''}"></div>`).join('')}`).join('')}</div></div>` : ''}
-    ${ts.length ? `<div class="sec"><h6>Project Tasks</h6><table class="table">${cols(['24px','auto','80px','80px','40px','28px'])}<thead><tr><th>#</th><th>Task</th><th>Start</th><th>End</th><th>Prio</th><th>✓</th></tr></thead><tbody>
-      ${ts.map((x, i) => `<tr><td>${i + 1}</td><td>${t(x.name)}</td><td>${d(x.start)}</td><td>${d(x.end)}</td><td>${esc(x.prio) || '–'}</td><td>${x.done ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
-    ${p.notes.trim() ? `<div class="sec notes-sec"><h6>Notes</h6><div class="ptxt">${t(p.notes)}</div></div>` : ''}
+    ${ts.length ? `<div class="sec"><h6>Project Tasks</h6><table class="table">${cols(['24px','auto','92px','92px','40px','28px'])}<thead><tr><th>#</th><th>Task</th><th>Start</th><th>End</th><th>Prio</th><th>✓</th></tr></thead><tbody>
+      ${ts.map((x, i) => `<tr class="${x.done ? 'done' : ''}"><td>${i + 1}</td><td>${t(x.name)}</td><td>${d(x.start)}</td><td>${d(x.end)}</td><td><span class="prio-chip prio-${esc(x.prio)}">${esc(x.prio) || '–'}</span></td><td>${x.done ? '✓' : ''}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${p.notes.trim() && p.notes.trim() !== NOTES_TEMPLATE.trim() ? `<div class="sec notes-sec"><h6>Notes</h6><div class="ptxt">${t(p.notes)}</div></div>` : ''}
   </div>`;
 }
 function fillPrint() { const p = S.view === 'project' && S.data ? cur() : null; $('#print').innerHTML = p ? printView(p) : ''; }
@@ -242,7 +284,7 @@ function listView() {
   const q = S.q.trim().toLowerCase();
   const ps = S.data.projects
     .filter(p => S.filter === 'all' || p.status === S.filter)
-    .filter(p => !q || (p.name + ' ' + p.objective).toLowerCase().includes(q))
+    .filter(p => !q || [p.name, p.objective, p.outcome, p.notes].join(' ').toLowerCase().includes(q))
     .sort((a, b) => b.created - a.created);
   const seg = ['active', 'completed', 'archived', 'all'].map(f =>
     `<label class="seg-opt"><input type="radio" name="f" value="${f}" ${S.filter === f ? 'checked' : ''}>${f[0].toUpperCase() + f.slice(1)}</label>`).join('');
@@ -253,9 +295,10 @@ function listView() {
       <button class="btn btn-primary" data-action="new">New project</button>
     </div>
     <div class="plist">${ps.length ? ps.map(p => `
-      <button class="prow" data-action="open" data-id="${p.id}">
+      <button class="prow ${vcls(p.verdict)}" data-action="open" data-id="${p.id}">
         <div><div class="pname">${esc(p.name) || '<span class="text-muted">Untitled project</span>'}</div>${p.objective ? `<div class="pobj">${esc(p.objective)}</div>` : ''}</div>
-        <div class="pdue">${p.due ? 'Due ' + esc(p.due) : ''}</div>
+        <div class="pdue ${dueCls(p)}">${p.due ? 'Due ' + esc(p.due.split('-').reverse().join('/')) : ''}</div>
+        <div><span class="tag vtag ${vcls(p.verdict)}">${vname(p.verdict)}</span></div>
         <div><span class="tag ${p.status === 'active' ? 'tag-accent' : 'tag-neutral'}">${p.status}</span></div>
       </button>`).join('') : `<div class="empty">${S.data.projects.length ? 'No projects match.' : 'No projects yet. Start with “New project”.'}</div>`}
     </div>`;
@@ -276,16 +319,22 @@ function projectView(p) {
       <input class="titlein" data-bind="name" value="${esc(p.name)}" placeholder="Project name">
       <div class="meta" style="margin-top:var(--space-4)">
         <div><label>Objective</label><textarea class="cell" rows="1" data-bind="objective" placeholder="What does done look like?">${esc(p.objective)}</textarea></div>
-        <div><label>Due</label><input class="cell" type="date" data-bind="due" value="${esc(p.due)}"></div>
+        <div><label>Due</label><input class="cell ${dueCls(p)}" type="date" data-bind="due" value="${esc(p.due)}"></div>
+      </div>
+      <div class="outcome ${vcls(p.verdict)}">
+        <div class="outcome-head"><label>Result</label>
+          <div class="seg verdict" role="radiogroup" aria-label="Result">${VERDICTS.map(([v, n]) => `<label class="seg-opt ${vcls(v)}"><input type="radio" name="verdict" value="${v}" data-bind="verdict" ${(p.verdict || '') === v ? 'checked' : ''}>${n}</label>`).join('')}</div>
+        </div>
+        <textarea class="cell" rows="2" data-bind="outcome" placeholder="What did you find, and what is the next step?">${esc(p.outcome)}</textarea>
       </div>
     </div>
 
     <div class="sec"><h6>Project Milestones</h6>
       <table class="table"><thead><tr><th>#</th><th>Milestone</th><th style="width:150px">Progress</th><th style="width:150px">Due</th><th style="width:30px">✓</th><th style="width:30px"></th></tr></thead><tbody>
-      ${p.milestones.map((m, i) => `<tr>
+      ${p.milestones.map((m, i) => `<tr class="${m.done ? 'done' : ''}">
         <td>${i + 1}</td>
         <td><textarea class="cell" rows="1" data-bind="milestones.${i}.name">${esc(m.name)}</textarea></td>
-        <td><div class="prog">${[0,1,2,3,4].map(k => `<button type="button" class="${k < m.progress ? 'on' : ''}" data-action="prog" data-i="${i}" data-k="${k}" aria-label="Progress ${(k+1)*20}%"></button>`).join('')}</div></td>
+        <td><div class="prog ${m.progress >= 5 ? 'full' : ''}">${[0,1,2,3,4].map(k => `<button type="button" class="${k < m.progress ? 'on' : ''}" data-action="prog" data-i="${i}" data-k="${k}" aria-label="Progress ${(k+1)*20}%"></button>`).join('')}</div></td>
         <td><input class="cell" type="date" data-bind="milestones.${i}.due" value="${esc(m.due)}"></td>
         <td><input class="chk" type="checkbox" data-bind="milestones.${i}.done" ${m.done ? 'checked' : ''}></td>
         <td class="no-print"><button class="rm" data-action="rm" data-list="milestones" data-i="${i}" aria-label="Remove">×</button></td>
@@ -306,12 +355,12 @@ function projectView(p) {
 
     <div class="sec"><h6>Project Tasks</h6>
       <table class="table"><thead><tr><th>#</th><th>Task</th><th style="width:150px">Start</th><th style="width:150px">End</th><th style="width:70px">Prio</th><th style="width:30px">✓</th><th style="width:30px"></th></tr></thead><tbody>
-      ${p.tasks.map((t, i) => `<tr>
+      ${p.tasks.map((t, i) => `<tr class="${t.done ? 'done' : ''}">
         <td>${i + 1}</td>
         <td><textarea class="cell" rows="1" data-bind="tasks.${i}.name">${esc(t.name)}</textarea></td>
         <td><input class="cell" type="date" data-bind="tasks.${i}.start" value="${esc(t.start)}"></td>
         <td><input class="cell" type="date" data-bind="tasks.${i}.end" value="${esc(t.end)}"></td>
-        <td><select class="cell" data-bind="tasks.${i}.prio">${prio(t.prio)}</select></td>
+        <td><select class="cell prio-${esc(t.prio)}" data-bind="tasks.${i}.prio">${prio(t.prio)}</select></td>
         <td><input class="chk" type="checkbox" data-bind="tasks.${i}.done" ${t.done ? 'checked' : ''}></td>
         <td class="no-print"><button class="rm" data-action="rm" data-list="tasks" data-i="${i}" aria-label="Remove">×</button></td>
       </tr>`).join('')}</tbody></table>
@@ -352,6 +401,10 @@ app.addEventListener('input', e => {
   const b = t.dataset.bind; if (!b) return;
   if (t.tagName === 'TEXTAREA') grow(t);
   setPath(cur(), b, t.type === 'checkbox' ? t.checked : t.value); save();
+  if (t.type === 'checkbox') t.closest('tr')?.classList.toggle('done', t.checked);
+  if (t.tagName === 'SELECT') t.className = 'cell prio-' + t.value;
+  if (b === 'verdict') { const o = t.closest('.outcome'); o.className = 'outcome ' + vcls(t.value); }
+  if (b === 'due') t.className = 'cell ' + dueCls(cur());
 });
 app.addEventListener('change', e => {
   if (e.target.name === 'f') { S.filter = e.target.value; render(); }
@@ -400,14 +453,14 @@ if (/[?&]demo\b/.test(location.search)) {
   const days = (a, b) => Array.from({ length: 30 }, (_, i) => i >= a && i <= b);
   const P = (o) => Object.assign(newProject(), o);
   S.data = { projects: [
-    P({ name: 'Garden renovation', objective: 'Replant the back garden with low-water plants before the autumn rains.', due: '2026-10-31', created: 3,
+    P({ name: 'Garden renovation', objective: 'Replant the back garden with low-water plants before the autumn rains.', outcome: 'Soil prep running late: the rotavator was booked out. Planting may slip one week.', verdict: 'partial', due: '2026-10-31', created: 3,
       milestones: [{ name: 'Design and plant list', progress: 5, due: '2026-09-20', done: true }, { name: 'Clear and prepare soil', progress: 3, due: '2026-10-05', done: false }, { name: 'Planting', progress: 0, due: '2026-10-25', done: false }],
       timeline: [{ name: 'Design', days: days(0, 5) }, { name: 'Soil prep', days: days(6, 14) }, { name: 'Irrigation', days: days(12, 18) }, { name: 'Planting', days: days(19, 27) }],
       tasks: [{ name: 'Measure beds and sketch layout', start: '2026-09-01', end: '2026-09-03', prio: 'H', done: true }, { name: 'Order plants from nursery', start: '2026-09-15', end: '2026-09-18', prio: 'M', done: true }, { name: 'Rent a rotavator', start: '2026-10-01', end: '2026-10-02', prio: 'M', done: false }, { name: 'Install drip irrigation lines', start: '2026-10-12', end: '2026-10-18', prio: 'H', done: false }],
       notes: 'Nursery: ask for lavender, rosemary and salvia.\nKeep the old olive tree.' }),
     P({ name: 'Half marathon training', objective: 'Finish the city half marathon under 2 hours.', due: '2026-11-15', created: 2,
       milestones: [{ name: '10 km without stopping', progress: 4, due: '2026-10-01', done: false }, { name: '18 km long run', progress: 1, due: '2026-11-01', done: false }] }),
-    P({ name: 'Portfolio website', objective: 'Publish a simple site with my last five projects.', due: '2026-08-30', status: 'completed', created: 1 }),
+    P({ name: 'Portfolio website', objective: 'Publish a simple site with my last five projects.', outcome: 'Live on GitHub Pages. Next: add a contact form.', verdict: 'worked', due: '2026-08-30', status: 'completed', created: 1 }),
   ] };
   S.view = 'list'; S.demo = true;
 }
