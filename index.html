@@ -33,7 +33,8 @@
   .cell::placeholder { color: color-mix(in srgb, var(--color-text) 40%, transparent); }
   .cell:focus-visible { outline: none; box-shadow: 0 1px 0 var(--color-accent); }
   select.cell { cursor: pointer; }
-  textarea.cell { resize: vertical; min-height: 120px; line-height: 1.55; }
+  textarea.cell { resize: none; overflow: hidden; line-height: 1.55; display: block; }
+  textarea.cell.notes { min-height: 120px; }
   .meta { display: grid; grid-template-columns: minmax(0,1fr) 220px; gap: var(--space-6); align-items: end; }
   .meta label, .sec h6 { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 60%, transparent); margin: 0 0 var(--space-1); }
   .sec h6 { margin-bottom: var(--space-3); }
@@ -120,8 +121,13 @@ function render() {
   const app = $('#app');
   if (S.view === 'lock') return app.innerHTML = lockView();
   app.innerHTML = topbar() + (S.view === 'project' ? projectView(cur()) : listView());
+  document.querySelectorAll('textarea.cell').forEach(grow);
   if (S.view === 'list') { const q = $('#q'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }
 }
+
+function grow(t) { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
+window.addEventListener('beforeprint', () => document.querySelectorAll('textarea.cell').forEach(grow));
+window.addEventListener('resize', () => document.querySelectorAll('textarea.cell').forEach(grow));
 
 function lockView() {
   const has = !!localStorage.getItem(LS);
@@ -192,7 +198,7 @@ function projectView(p) {
     <div>
       <input class="titlein" data-bind="name" value="${esc(p.name)}" placeholder="Project name">
       <div class="meta" style="margin-top:var(--space-4)">
-        <div><label>Objective</label><input class="cell" data-bind="objective" value="${esc(p.objective)}" placeholder="What does done look like?"></div>
+        <div><label>Objective</label><textarea class="cell" rows="1" data-bind="objective" placeholder="What does done look like?">${esc(p.objective)}</textarea></div>
         <div><label>Due</label><input class="cell" type="date" data-bind="due" value="${esc(p.due)}"></div>
       </div>
     </div>
@@ -236,7 +242,7 @@ function projectView(p) {
     </div>
 
     <div class="sec"><h6>Notes</h6>
-      <textarea class="cell" data-bind="notes" placeholder="Anything worth remembering">${esc(p.notes)}</textarea>
+      <textarea class="cell notes" data-bind="notes" placeholder="Anything worth remembering">${esc(p.notes)}</textarea>
     </div>
   </div>`;
 }
@@ -267,6 +273,7 @@ app.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'q') { S.q = t.value; return render(); }
   const b = t.dataset.bind; if (!b) return;
+  if (t.tagName === 'TEXTAREA') grow(t);
   setPath(cur(), b, t.type === 'checkbox' ? t.checked : t.value); save();
 });
 app.addEventListener('change', e => {
